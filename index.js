@@ -5,8 +5,6 @@ const app = express();
 const bodyparser = require('body-parser');
 const dns = require('dns');
 
-const db = require('./database');
-
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
@@ -27,22 +25,13 @@ app.get('/api/hello', function(req, res) {
 
 app.get('/api/shorturl/:short_url', (req, res) => {
   let short_url = parseInt(req.params.short_url)
-  // let data = database[short_url - 1];
-  // if (!data){
-  //   res.json({error: "invalid url"});
-  // }
-  // else{
-  //   res.redirect(data.original_url);
-  // }
-  db.UrlModel.findOne({short_id: short_url})
-  .then((url) => {
-    console.log(url);
-    res.redirect(url.original_url);
-  })
-  .catch((err) => {
-    console.log(err);
-    res.json({error: 'invalid url'});
-  });
+  let data = database[short_url - 1];
+  if (!data){
+    res.json({error: "invalid url"});
+  }
+  else{
+    res.redirect(data.original_url);
+  }
 });
 
 app.post('/api/shorturl', bodyparser.urlencoded({ extended: false }), 
@@ -57,19 +46,8 @@ app.post('/api/shorturl', bodyparser.urlencoded({ extended: false }),
   });
 }, (req, res) => {
   let data = {original_url : req.body.url, short_url : database.length + 1};
-  let url = new db.UrlModel({
-    original_url : req.body.url,
-    short_id : database.length + 1
-  })
-  url.save().then(() => {
-      res.json(data);
-      console.log(`${data} saved successfully`); 
-  }).catch((err) => {
-    res.json({error: 'invalid url'});
-      console.log(`${data} unsaved, error: ${err.message}`);
-  });
   database.push(data);
-
+  res.send(data);
 });
 
 app.listen(port, function() {
